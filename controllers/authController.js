@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const User = require('./../models/userModel');
-const UnverifiedUser = require('./../models/unverifiedUserModel')
+const UnverifiedUser = require('./../models/unverifiedUserModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const Email = require('./../utils/email');
@@ -45,13 +45,14 @@ exports.signup = catchAsync(async (req, res, next) => {
     );
   }
 
-  let newUser = await UnverifiedUser.findOne({email: req.body.email})
+  let newUser = await UnverifiedUser.findOne({ email: req.body.email });
 
-  if(!newUser) newUser = await UnverifiedUser.create({
-    email: req.body.email,
-    password: req.body.password,
-    passwordConfirm: req.body.passwordConfirm,
-  });
+  if (!newUser)
+    newUser = await UnverifiedUser.create({
+      email: req.body.email,
+      password: req.body.password,
+      passwordConfirm: req.body.passwordConfirm,
+    });
 
   const token = signToken(newUser._id);
 
@@ -60,23 +61,21 @@ exports.signup = catchAsync(async (req, res, next) => {
 
     const email = new Email(newUser, url);
     await email.sendConfirmation();
-  
+
     res.status(200).json({
       status: 'success',
-      message: 'Please click on the link in your mail to complete registration',
+      message:
+        'Please click on the link in your mail to complete registration.',
     });
-  } catch(err) {
+  } catch (err) {
     return next(
       new AppError('There was an error sending the email. Try again later!'),
       500,
     );
   }
-
-
 });
 
-exports.completeSignup = catchAsync(async(req, res, next) => {
-  console.log(req.params)
+exports.completeSignup = catchAsync(async (req, res, next) => {
   if (!req.params.token) {
     return next(new AppError('Invalid token!', 401));
   }
@@ -86,7 +85,9 @@ exports.completeSignup = catchAsync(async(req, res, next) => {
     process.env.JWT_SECRET,
   );
 
-  const currentUser = await UnverifiedUser.findOne({ _id: decoded.id }).select('+password')
+  const currentUser = await UnverifiedUser.findOne({ _id: decoded.id }).select(
+    '+password',
+  );
 
   if (!currentUser) {
     return next(
@@ -102,13 +103,13 @@ exports.completeSignup = catchAsync(async(req, res, next) => {
     lastname: req.body.lastname,
     othernames: req.body.othernames,
     username: req.body.username,
-    phoneNumber: req.body.phoneNumber
+    phoneNumber: req.body.phoneNumber,
   });
 
-  await UnverifiedUser.findOneAndDelete(currentUser._id)
+  await UnverifiedUser.findOneAndDelete(currentUser._id);
 
-  createSendToken((user), 201, res);
-})
+  createSendToken(user, 201, res);
+});
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
@@ -135,7 +136,6 @@ exports.logout = (req, res) => {
   });
   res.status(200).json({ status: 'success' });
 };
-
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   // 1) Get user based on POSTed email

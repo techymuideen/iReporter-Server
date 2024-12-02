@@ -36,10 +36,13 @@ module.exports = class Email {
 
   async send(template, subject) {
     //Render html based on a pug template
-    const html = pug.renderFile(`${__dirname}/../public/email/${template}.pug`, {
-      url: this.url,
-      subject: subject,
-    });
+    const html = pug.renderFile(
+      `${__dirname}/../public/email/${template}.pug`,
+      {
+        url: this.url,
+        subject: subject,
+      },
+    );
 
     // 2) Define the email options
     const mailOptions = {
@@ -55,7 +58,10 @@ module.exports = class Email {
   }
 
   async sendConfirmation() {
-    await this.send('completeRegistration', 'Complete Your Sign-Up for iReporter');
+    await this.send(
+      'completeRegistration',
+      'Complete Your Sign-Up for iReporter',
+    );
   }
 
   async sendWelcome() {
