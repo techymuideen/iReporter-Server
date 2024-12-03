@@ -1,9 +1,16 @@
 const AppError = require('./../utils/appError');
 
-const handleMulterLimitError = () => {
-  const message =
-    'Too many files uploaded. Please upload a maximum of 4 files.';
-  return new AppError(message, 400);
+const handleMulterError = err => {
+  if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+    return new AppError('Too many files uploaded. Maximum of 4 allowed.', 400);
+  }
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return new AppError('File size exceeds the maximum limit.', 400);
+  }
+  if (err.code === 'LIMIT_FILE_COUNT') {
+    return new AppError('Too many files uploaded.', 400);
+  }
+  return new AppError('File upload error.', 400);
 };
 
 const handleCastErrorDB = err => {
@@ -107,8 +114,7 @@ module.exports = (err, req, res, next) => {
       error = handleValidationErrorDB(error);
     if (error.name === 'JsonWebTokenError') error = handleJWTError();
     if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
-    if (error.name === 'MulterError' && error.code === 'LIMIT_UNEXPECTED_FILE')
-      error = handleMulterLimitError();
+    if (error.name === 'MulterError') error = handleMulterError(error);
 
     sendErrorProd(error, req, res);
   }

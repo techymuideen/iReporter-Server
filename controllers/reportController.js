@@ -34,22 +34,31 @@ exports.uploadReportFiles = upload.fields([
 
 // Middleware to process uploaded files
 exports.handleReportFiles = catchAsync(async (req, res, next) => {
-  console.log('Reading files');
+  try {
+    req.body.images = [];
+    req.body.videos = [];
 
-  req.body.images = [];
-  req.body.videos = [];
+    // Check if req.files exists and contains the expected files
+    if (req.files) {
+      // Process images if they exist
+      if (req.files.images) {
+        req.body.images = req.files.images.map(file => file.path);
+      }
 
-  // Process images
-  if (req.files.images) {
-    req.body.images = req.files.images.map(file => file.path);
+      // Process videos if they exist
+      if (req.files.videos) {
+        req.body.videos = req.files.videos.map(file => file.path);
+      }
+    } else {
+      // If no files are uploaded, throw an AppError
+      return next(new AppError('No files were uploaded', 400));
+    }
+
+    next();
+  } catch (err) {
+    console.error('File upload error:', err); // Log error for debugging
+    return next(new AppError('Failed to upload files', 400)); // Use AppError instead of Error
   }
-
-  // Process videos
-  if (req.files.videos) {
-    req.body.videos = req.files.videos.map(file => file.path);
-  }
-
-  next();
 });
 
 // Factory Handlers for CRUD operations

@@ -17,7 +17,7 @@ router.post('/updatepassword', protect, authController.updatePassword);
 router
   .route('/')
   .get(protect, userController.getAllUsers)
-  .post(userController.createUser);
+  .post(protect, userController.createUser);
 
 router
   .route('/me')
@@ -32,7 +32,7 @@ router
 
 router
   .route('/:id')
-  .get(userController.getUser)
+  .get(protect, userController.getUser)
   .patch(protect, restrictTo('admin'), userController.updateUser)
   .delete(protect, restrictTo('admin'), userController.deleteUser);
 
