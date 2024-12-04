@@ -1,18 +1,21 @@
 {
   "name": "ireporter-server",
   "version": "1.0.0",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
     "start:prod": "NODE_ENV=production nodemon server.js",
-    "debug": "ndb server.js"
+    "debug": "ndb server.js",
+    "test": "jest"
   },
   "author": "Muideen Popoola",
   "license": "ISC",
   "description": "The server for ireporter app. A platform for reporting.",
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.3",
+    "cloudinary": "^2.5.1",
     "compression": "^1.7.5",
     "cookie-parser": "^1.4.7",
     "core-js": "^3.39.0",
@@ -28,16 +31,21 @@
     "mongoose": "^8.6.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^6.9.15",
+    "pug": "^3.0.3",
     "sharp": "^0.33.5",
     "slugify": "^1.6.6",
+    "supertest": "^7.0.0",
     "validator": "^13.12.0",
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {
-    "@eslint/js": "^9.9.1",
+    "@eslint/js": "^9.15.0",
+    "@types/jest": "^29.5.14",
     "concurrently": "^8.2.2",
-    "eslint": "^8.57.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.57.1",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
@@ -45,7 +53,8 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.35.0",
-    "globals": "^15.9.0",
+    "globals": "^15.12.0",
+    "jest": "^29.7.0",
     "parcel-bundler": "^1.12.5",
     "prettier": "^3.3.3"
   },
