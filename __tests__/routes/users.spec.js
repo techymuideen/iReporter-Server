@@ -5,9 +5,9 @@ const protect = require('../../middlewares/protect');
 const userController = require('../../controllers/userController');
 const AppError = require('../../utils/appError');
 
-jest.mock('../middlewares/protect');
-jest.mock('../controllers/userController');
-jest.mock('../utils/appError');
+jest.mock('../../middlewares/protect');
+jest.mock('../../controllers/userController');
+jest.mock('../../utils/appError');
 
 const app = express();
 app.use(express.json());

@@ -1,13 +1,13 @@
 const request = require('supertest');
 const express = require('express');
-const reportRouter = require('../routes/reportRoutes');
-const protect = require('../middlewares/protect');
-const reportController = require('../controllers/reportController');
-const AppError = require('../utils/appError');
+const reportRouter = require('../../routes/reportRoutes');
+const protect = require('../../middlewares/protect');
+const reportController = require('../../controllers/reportController');
+const AppError = require('../../utils/appError');
 
-jest.mock('../middlewares/protect');
-jest.mock('../controllers/reportController');
-jest.mock('../utils/appError');
+jest.mock('../../middlewares/protect');
+jest.mock('../../controllers/reportController');
+jest.mock('../../utils/appError');
 
 const app = express();
 app.use(express.json());

@@ -1,0 +1,9 @@
+language: node_js
+node_js:
+  - '20' # Specify the Node.js version
+script:
+  - npm install
+  - npm test
+cache:
+  directories:
+    - node_modules # Cache dependencies to speed up builds

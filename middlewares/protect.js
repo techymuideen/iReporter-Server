@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const AppError = require('./../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
 
-const User = require('../models/userModel')
+const User = require('../models/userModel');
 
 const protect = catchAsync(async (req, res, next) => {
   // 1) Getting token and check of it's there
@@ -50,4 +50,4 @@ const protect = catchAsync(async (req, res, next) => {
   next();
 });
 
-module.exports = protect
+module.exports = protect;
