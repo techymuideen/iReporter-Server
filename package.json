@@ -15,7 +15,7 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",
-    "cloudinary": "^2.5.1",
+    "cloudinary": "^1.21.0",
     "compression": "^1.7.5",
     "cookie-parser": "^1.4.7",
     "core-js": "^3.39.0",
@@ -44,6 +44,7 @@
     "@eslint/js": "^9.15.0",
     "@types/jest": "^29.5.14",
     "concurrently": "^8.2.2",
+    "coveralls-next": "^4.2.1",
     "cross-env": "^7.0.3",
     "eslint": "^8.57.1",
     "eslint-config-airbnb": "^19.0.4",
