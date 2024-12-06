@@ -19,6 +19,9 @@ const reportRouter = require('./routes/reportRoutes');
 
 const app = express();
 
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+
 // Serving static files
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -28,7 +31,13 @@ app.use(helmet());
 
 app.use(
   cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'https://ireporterr.vercel.app',
+    ],
     credentials: true,
   }),
 );
