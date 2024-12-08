@@ -6,7 +6,7 @@ module.exports = class Email {
   constructor(user, url) {
     this.to = user.email;
     this.url = url;
-    this.from = `Natours <${process.env.EMAIL_FROM}>`;
+    this.from = `iReporter <${process.env.EMAIL_FROM}>`;
   }
 
   newTransport() {

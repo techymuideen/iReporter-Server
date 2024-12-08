@@ -59,7 +59,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   const token = signToken(newUser._id);
 
   try {
-    const url = `${req.protocol}://${req.get('host')}/api/v1/users/complete-signup/${token}`;
+    const url = `https://ireporterr.vercel.app/complete-signup/${token}`;
 
     const email = new Email(newUser, url);
     await email.sendConfirmation();
@@ -152,9 +152,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
   // 3) Send it to user's email
   try {
-    const resetURL = `${req.protocol}://${req.get(
-      'host',
-    )}/api/v1/users/resetpassword/${resetToken}`;
+    const resetURL = `https://ireporterr.vercel.app/resetpassword/${resetToken}`;
 
     await new Email(user, resetURL).sendPasswordReset();
 
