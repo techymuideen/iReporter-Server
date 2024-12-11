@@ -19,8 +19,12 @@ const userSchema = new mongoose.Schema({
   phoneNumber: {
     type: String,
     unique: true,
-    required: [true, 'Please provide your phone number'],
     validate: [validator.isNumeric, 'Please provide a valid phone number'],
+  },
+  signupMethod: {
+    type: String,
+    default: 'email',
+    enum: ['email', 'google', 'facebook', 'twitter'],
   },
   isAdmin: {
     type: Boolean,
@@ -56,13 +60,11 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'Please provide a password'],
     minlength: 8,
     select: false,
   },
   passwordConfirm: {
     type: String,
-    required: [true, 'Please confirm the password.'],
     validate: {
       validator: function (value) {
         return value === this.password;
