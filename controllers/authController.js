@@ -70,11 +70,15 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
       photo: userRes.data.picture,
       signupMethod: 'google',
     });
+
+    const url = `https://ireporterr.vercel.app/report/create`;
+    const email = new Email(newUser, url);
+    await email.sendConfirmation();
+
+    await user.save({ validateBeforeSave: false });
+
+    createSendToken(user, 201, res);
   }
-
-  await user.save({ validateBeforeSave: false });
-
-  createSendToken(user, 201, res);
 });
 
 exports.signup = catchAsync(async (req, res, next) => {
@@ -156,6 +160,10 @@ exports.completeSignup = catchAsync(async (req, res, next) => {
   });
 
   await UnverifiedUser.findOneAndDelete(currentUser._id);
+
+  const url = `https://ireporterr.vercel.app/report/create`;
+  const email = new Email(newUser, url);
+  await email.sendConfirmation();
 
   createSendToken(user, 201, res);
 });

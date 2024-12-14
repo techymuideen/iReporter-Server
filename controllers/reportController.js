@@ -4,6 +4,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const Report = require('../models/reportModel');
 const factory = require('./handlerFactory');
+const APIFeatures = require('../utils/apiFeatures');
 
 // Multer filter to check file type
 const multerFilter = (req, file, cb) => {
@@ -35,19 +36,30 @@ exports.uploadReportFiles = upload.fields([
 // Middleware to process uploaded files
 exports.handleReportFiles = catchAsync(async (req, res, next) => {
   try {
-    req.body.images = [];
-    req.body.videos = [];
+    const existingImages = req.body.existingImages
+      ? JSON.parse(req.body.existingImages)
+      : [];
+
+    const existingVideos = req.body.existingVideos
+      ? JSON.parse(req.body.existingVideos)
+      : [];
+
+    // Initialize req.body.images with existing images
+    req.body.images = existingImages;
+    req.body.videos = existingVideos;
 
     // Check if req.files exists and contains the expected files
     if (req.files) {
       // Process images if they exist
       if (req.files.images) {
-        req.body.images = req.files.images.map(file => file.path);
+        const newImagePaths = req.files.images.map(file => file.path);
+        req.body.images = [...req.body.images, ...newImagePaths];
       }
 
       // Process videos if they exist
       if (req.files.videos) {
-        req.body.videos = req.files.videos.map(file => file.path);
+        const newVideoPaths = req.files.videos.map(file => file.path);
+        req.body.videos = [...req.body.videos, ...newVideoPaths];
       }
     } else {
       // If no files are uploaded, throw an AppError
@@ -61,9 +73,58 @@ exports.handleReportFiles = catchAsync(async (req, res, next) => {
   }
 });
 
+exports.addAuthor = catchAsync(async (req, res, next) => {
+  if (!req.body.createdBy) req.body.createdBy = req.user.id;
+  next();
+});
+
 // Factory Handlers for CRUD operations
 exports.createReport = factory.createOne(Report);
-exports.getAllReports = factory.getAll(Report);
+
+exports.getAllReports = catchAsync(async (req, res, next) => {
+  const totalReports = new APIFeatures(Report.find(), req.query)
+    .filter()
+    .sort()
+    .limitFields();
+
+  const count = await totalReports.query.countDocuments();
+
+  // Execute query
+
+  let features;
+  if (!req.user.isAdmin) {
+    features = new APIFeatures(
+      Report.find({ createdBy: req.user.id }),
+      req.query,
+    )
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+  }
+
+  if (req.user.isAdmin) {
+    features = new APIFeatures(Report.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+  }
+
+  const reports = await features.query;
+
+  // Send Response
+  res.status(200).json({
+    status: 'sucess',
+    result: reports.length,
+    data: {
+      reports: reports,
+      count: count,
+    },
+  });
+});
+
+// exports.getAllReports = factory.getAll(Report);
 exports.getReport = factory.getOne(Report, {
   path: 'createdBy',
   select: ['-createdAt', '-passwordChangedAt', '-__v'],

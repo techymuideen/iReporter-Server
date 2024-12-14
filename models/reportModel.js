@@ -26,6 +26,7 @@ const reportSchema = new mongoose.Schema(
     slug: String,
     images: [String],
     videos: [String],
+
     location: {
       type: {
         type: String,
