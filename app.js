@@ -14,6 +14,7 @@ const compression = require('compression');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 
+const authRouter = require('./routes/authRoutes');
 const userRouter = require('./routes/userRoutes');
 const reportRouter = require('./routes/reportRoutes');
 
@@ -84,6 +85,7 @@ app.use((req, res, next) => {
 });
 
 // 3) ROUTES
+app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reports', reportRouter);
 

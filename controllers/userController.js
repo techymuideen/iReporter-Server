@@ -4,8 +4,7 @@ const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const factory = require('./handlerFactory');
-
-const multerStorage = multer.memoryStorage();
+const storage = require('../storage/storage');
 
 const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image')) {
@@ -15,26 +14,33 @@ const multerFilter = (req, file, cb) => {
   }
 };
 
+// Initialize multer with storage and filter
 const upload = multer({
-  storage: multerStorage,
+  storage,
   fileFilter: multerFilter,
 });
 
-exports.uploadUserPhoto = upload.single('photo');
+// Middleware for uploading report files
+exports.uploadUserPhoto = upload.fields([{ name: 'photo', maxCount: 1 }]);
 
 exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
-  if (!req.file) return next(); // If no file is uploaded, move to the next middleware
+  try {
+    // Check if req.files exists and contains the expected files
+    if (req.files) {
+      // Process images if they exist
+      if (req.files.photo) {
+        req.body.photo = req.files.photo[0].path;
+      }
+    } else {
+      // If no files are uploaded, throw an AppError
+      return next(new AppError('No files were uploaded', 400));
+    }
 
-  req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
-
-  // Make the sharp operation async with await
-  await sharp(req.file.buffer)
-    .resize(500, 500)
-    .toFormat('jpeg')
-    .jpeg({ quality: 90 })
-    .toFile(`public/images/users/${req.file.filename}`);
-
-  next(); // Proceed to the next middleware
+    next();
+  } catch (err) {
+    console.error('File upload error:', err); // Log error for debugging
+    return next(new AppError('Failed to upload files', 400)); // Use AppError instead of Error
+  }
 });
 
 const filterObj = (obj, ...allowedFields) => {
@@ -70,8 +76,9 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     'phoneNumber',
     'username',
     'email',
+    'photo',
   );
-  if (req.file) filteredBody.photo = req.file.filename;
+  if (req.file) filteredBody.photo = req.body.photo;
 
   // 3) Update user document
   const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {

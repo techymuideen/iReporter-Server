@@ -6,14 +6,6 @@ const restrictTo = require('../middlewares/restrictTo');
 
 const router = express.Router();
 
-router.post('/signup', authController.signup);
-router.post('/complete-signup/:token', authController.completeSignup);
-router.post('/login', authController.login);
-router.post('/forgotpassword', authController.forgotPassword);
-router.post('/resetpassword/:token', authController.resetPassword);
-router.get('/logout', authController.logout);
-router.post('/updatepassword', protect, authController.updatePassword);
-
 router
   .route('/')
   .get(protect, userController.getAllUsers)

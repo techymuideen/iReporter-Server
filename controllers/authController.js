@@ -1,4 +1,6 @@
 const crypto = require('crypto');
+const axios = require('axios');
+const oauth2Client = require('../utils/oauth2client');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const User = require('./../models/userModel');
@@ -17,17 +19,23 @@ const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
   const cookieOptions = {
     httpOnly: true,
-    SameSite: false,
+    path: '/',
+    sameSite: false,
+    secure: false,
     maxAge: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000,
     ),
   };
-  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+  if (process.env.NODE_ENV === 'production') {
+    cookieOptions.secure = true;
+    cookieOptions.sameSite = 'none';
+  }
 
   res.cookie('jwt', token, cookieOptions);
 
   // Remove password from output
   user.password = undefined;
+  user.passwordConfirm = undefined;
 
   res.status(statusCode).json({
     status: 'success',
@@ -37,6 +45,41 @@ const createSendToken = (user, statusCode, res) => {
     },
   });
 };
+
+/* GET Google Authentication API. */
+exports.googleAuth = catchAsync(async (req, res, next) => {
+  const code = req.query.code;
+
+  const googleRes = await oauth2Client.oauth2Client.getToken(code);
+
+  oauth2Client.oauth2Client.setCredentials(googleRes.tokens);
+
+  const userRes = await axios.get(
+    `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleRes.tokens.access_token}`,
+  );
+
+  let user = await User.findOne({ email: userRes.data.email });
+
+  if (!user) {
+    console.log('New User found');
+    user = await User.create({
+      firstname: userRes.data.given_name,
+      lastname: userRes.data.family_name,
+      email: userRes.data.email,
+      username: userRes.data.given_name.toLowerCase(),
+      photo: userRes.data.picture,
+      signupMethod: 'google',
+    });
+
+    const url = `https://ireporterr.vercel.app/report/create`;
+    const email = new Email(newUser, url);
+    await email.sendConfirmation();
+
+    await user.save({ validateBeforeSave: false });
+
+    createSendToken(user, 201, res);
+  }
+});
 
 exports.signup = catchAsync(async (req, res, next) => {
   const existingUser = await User.findOne({ email: req.body.email });
@@ -48,6 +91,14 @@ exports.signup = catchAsync(async (req, res, next) => {
   }
 
   let newUser = await UnverifiedUser.findOne({ email: req.body.email });
+
+  if (!req.body.password) {
+    return next(newAppError('Password is compulsory!'));
+  }
+
+  if (!req.body.passwordConfirm) {
+    return next(new AppError('passwordConfirm is compulsory!'));
+  }
 
   if (!newUser)
     newUser = await UnverifiedUser.create({
@@ -109,6 +160,10 @@ exports.completeSignup = catchAsync(async (req, res, next) => {
   });
 
   await UnverifiedUser.findOneAndDelete(currentUser._id);
+
+  const url = `https://ireporterr.vercel.app/report/create`;
+  const email = new Email(newUser, url);
+  await email.sendConfirmation();
 
   createSendToken(user, 201, res);
 });

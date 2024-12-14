@@ -11,6 +11,7 @@ router
     protect,
     reportController.uploadReportFiles,
     reportController.handleReportFiles,
+    reportController.addAuthor,
     reportController.createReport,
   );
 
