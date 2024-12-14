@@ -141,7 +141,7 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 ## Contact
 
 - **Author:** Muideen  
-- **Email:** your-email@example.com  
+- **Email:** techymuideen@gmail.com  
 - **GitHub:** [@techymuideen](https://github.com/techymuideen)  
 
 Feel free to open an issue or contact me for further questions or suggestions!
