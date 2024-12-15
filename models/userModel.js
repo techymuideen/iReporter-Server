@@ -16,11 +16,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
-  phoneNumber: {
-    type: String,
-    unique: true,
-    validate: [validator.isNumeric, 'Please provide a valid phone number'],
-  },
   signupMethod: {
     type: String,
     default: 'email',
