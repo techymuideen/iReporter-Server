@@ -48,36 +48,43 @@ const createSendToken = (user, statusCode, res) => {
 
 /* GET Google Authentication API. */
 exports.googleAuth = catchAsync(async (req, res, next) => {
-  const code = req.query.code;
+  try {
+    const code = req.query.code;
 
-  const googleRes = await oauth2Client.oauth2Client.getToken(code);
+    if (!code) {
+      return next(new AppError('Missing authorization code', 400));
+    }
 
-  oauth2Client.oauth2Client.setCredentials(googleRes.tokens);
+    const { tokens } = await oauth2Client.oauth2Client.getToken(code);
 
-  const userRes = await axios.get(
-    `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleRes.tokens.access_token}`,
-  );
+    oauth2Client.oauth2Client.setCredentials(tokens);
 
-  let user = await User.findOne({ email: userRes.data.email });
+    const userRes = await axios.get(
+      `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${tokens.access_token}`,
+    );
 
-  if (!user) {
-    console.log('New User found');
-    user = await User.create({
-      firstname: userRes.data.given_name,
-      lastname: userRes.data.family_name,
-      email: userRes.data.email,
-      username: userRes.data.given_name.toLowerCase(),
-      photo: userRes.data.picture,
-      signupMethod: 'google',
-    });
+    let user = await User.findOne({ email: userRes.data.email });
 
-    const url = `https://ireporterr.vercel.app/report/create`;
-    const email = new Email(newUser, url);
-    await email.sendConfirmation();
+    if (!user) {
+      console.log('New User found');
+      user = await User.create({
+        firstname: userRes.data.given_name,
+        lastname: userRes.data.family_name || ' ',
+        email: userRes.data.email,
+        username: userRes.data.given_name.toLowerCase(),
+        photo: userRes.data.picture,
+        signupMethod: 'google',
+      });
 
-    await user.save({ validateBeforeSave: false });
+      const url = `${process.env.FRONTEND_BASE_URL}/report/create`;
+      const email = new Email(user, url);
+      await email.sendWelcome();
+    }
 
-    createSendToken(user, 201, res);
+    createSendToken(user, user ? 200 : 201, res);
+  } catch (err) {
+    console.error('Google Auth Error:', err);
+    next(err); // Propagate to global error handler
   }
 });
 
@@ -110,7 +117,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   const token = signToken(newUser._id);
 
   try {
-    const url = `https://ireporterr.vercel.app/complete-signup/${token}`;
+    const url = `${process.env.FRONTEND_BASE_URL}/complete-signup/${token}`;
 
     const email = new Email(newUser, url);
     await email.sendConfirmation();
@@ -121,6 +128,8 @@ exports.signup = catchAsync(async (req, res, next) => {
         'Please click on the link in your mail to complete registration.',
     });
   } catch (err) {
+    await UnverifiedUser.findOneAndDelete(newUser._id);
+    console.log(err);
     return next(
       new AppError('There was an error sending the email. Try again later!'),
       500,
@@ -161,9 +170,9 @@ exports.completeSignup = catchAsync(async (req, res, next) => {
 
   await UnverifiedUser.findOneAndDelete(currentUser._id);
 
-  const url = `https://ireporterr.vercel.app/report/create`;
-  const email = new Email(newUser, url);
-  await email.sendConfirmation();
+  const url = `${process.env.FRONTEND_BASE_URL}/report/create`;
+  const email = new Email(user, url);
+  await email.sendWelcome();
 
   createSendToken(user, 201, res);
 });
@@ -207,7 +216,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
   // 3) Send it to user's email
   try {
-    const resetURL = `https://ireporterr.vercel.app/resetpassword/${resetToken}`;
+    const resetURL = `${process.env.FRONTEND_BASE_URL}/resetpassword/${resetToken}`;
 
     await new Email(user, resetURL).sendPasswordReset();
 
