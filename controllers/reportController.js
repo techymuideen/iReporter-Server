@@ -74,6 +74,19 @@ exports.handleReportFiles = catchAsync(async (req, res, next) => {
 });
 
 exports.addAuthor = catchAsync(async (req, res, next) => {
+  if (req.body.location) {
+    try {
+      location = JSON.parse(req.body.location);
+
+      req.body.location = {
+        type: 'Point',
+        coordinates: [location.lat, location.long],
+      };
+    } catch (err) {
+      console.error('Invalid JSON in location field:', err);
+    }
+  }
+
   if (!req.body.createdBy) req.body.createdBy = req.user.id;
   next();
 });
@@ -82,16 +95,32 @@ exports.addAuthor = catchAsync(async (req, res, next) => {
 exports.createReport = factory.createOne(Report);
 
 exports.getAllReports = catchAsync(async (req, res, next) => {
-  const totalReports = new APIFeatures(Report.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields();
+  let count;
+  if (!req.user.isAdmin) {
+    const totalReports = new APIFeatures(
+      Report.find({ createdBy: req.user.id }),
+      req.query,
+    )
+      .filter()
+      .sort()
+      .limitFields();
 
-  const count = await totalReports.query.countDocuments();
+    count = await totalReports.query.countDocuments();
+  }
+
+  if (req.user.isAdmin) {
+    const totalReports = new APIFeatures(Report.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields();
+
+    count = await totalReports.query.countDocuments();
+  }
 
   // Execute query
 
   let features;
+
   if (!req.user.isAdmin) {
     features = new APIFeatures(
       Report.find({ createdBy: req.user.id }),
@@ -125,9 +154,58 @@ exports.getAllReports = catchAsync(async (req, res, next) => {
 });
 
 // exports.getAllReports = factory.getAll(Report);
-exports.getReport = factory.getOne(Report, {
-  path: 'createdBy',
-  select: ['-createdAt', '-passwordChangedAt', '-__v'],
+exports.getReport = catchAsync(async (req, res, next) => {
+  let query = Report.findById(req.params.id).populate({
+    path: 'createdBy',
+    select: ['-createdAt', '-passwordChangedAt', '-__v'],
+  });
+
+  const report = await query;
+
+  if (!report) {
+    return next(new AppError('No document found with that ID', 404));
+  }
+
+  const user = report.createdBy;
+
+  const formattedLocation = JSON.stringify({
+    lat: report.location.coordinates[0],
+    long: report.location.coordinates[1],
+  });
+
+  const response = {
+    status: 'success',
+    data: {
+      data: {
+        location: formattedLocation, // Returning the location as a string
+        _id: report._id,
+        title: report.title,
+        description: report.description,
+        status: report.status,
+        type: report.type,
+        images: report.images,
+        videos: report.videos,
+        createdBy: {
+          _id: user._id,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          othernames: user.othernames || '',
+          signupMethod: user.signupMethod,
+          isAdmin: user.isAdmin,
+          email: user.email,
+          username: user.username,
+          photo: user.photo,
+          role: user.role,
+        },
+        createdAt: report.createdAt,
+        slug: report.slug,
+        __v: report.__v,
+        id: report._id,
+      },
+    },
+  };
+
+  res.status(200).json(response);
 });
 
 exports.updateReport = factory.updateOne(Report);

@@ -22,6 +22,7 @@ router
     protect,
     reportController.uploadReportFiles,
     reportController.handleReportFiles,
+    reportController.addAuthor,
     reportController.updateReport,
   )
   .delete(protect, reportController.deleteReport);
