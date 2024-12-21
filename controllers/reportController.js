@@ -3,8 +3,10 @@ const storage = require('../storage/storage');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const Report = require('../models/reportModel');
+const User = require('../models/userModel');
 const factory = require('./handlerFactory');
 const APIFeatures = require('../utils/apiFeatures');
+const Email = require('./../utils/email');
 
 // Multer filter to check file type
 const multerFilter = (req, file, cb) => {
@@ -209,5 +211,36 @@ exports.getReport = catchAsync(async (req, res, next) => {
 });
 
 exports.updateReport = factory.updateOne(Report);
+
+exports.changeReportStatus = catchAsync(async (req, res, next) => {
+  try {
+    const doc = await Report.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!doc) {
+      return next(new AppError('No document found with that ID', 404));
+    }
+
+    const user = await User.findById(doc.createdBy);
+
+    const url = `${req.protocol}://${req.get('host')}/api/v1/reports/${doc._id}`;
+
+    await new Email(user, url, doc).sendStatusUpdate();
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        data: doc,
+      },
+    });
+  } catch (err) {
+    return next(
+      new AppError('There was an error sending the email. Try again later!'),
+      500,
+    );
+  }
+});
 
 exports.deleteReport = factory.deleteOne(Report);

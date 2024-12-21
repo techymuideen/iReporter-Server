@@ -15,7 +15,7 @@ const reportSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'reject', 'resolved', 'investigating'],
+      enum: ['pending', 'rejected', 'resolved', 'investigating'],
       default: 'pending',
     },
     type: {
@@ -46,6 +46,10 @@ const reportSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     toJSON: { virtuals: true },
@@ -56,6 +60,13 @@ const reportSchema = new mongoose.Schema(
 // DOCUMENT MIDDLEWARE: runs before .save() and .create()
 reportSchema.pre('save', function (next) {
   this.slug = slugify(this.title, { lower: true });
+  next();
+});
+
+reportSchema.pre('save', function (next) {
+  if (this.isModified('status')) {
+    this.updatedAt = new Date();
+  }
   next();
 });
 
