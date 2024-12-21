@@ -27,4 +27,6 @@ router
   )
   .delete(protect, reportController.deleteReport);
 
+router.route('/status/:id').patch(protect, reportController.changeReportStatus);
+
 module.exports = router;

@@ -3,9 +3,12 @@ const pug = require('pug');
 const htmlToText = require('html-to-text');
 
 module.exports = class Email {
-  constructor(user, url) {
+  constructor(user, url, doc = {}) {
     this.to = user.email;
     this.url = url;
+    this.firstName = user.firstname;
+    this.title = doc.title || '';
+    this.status = doc.status || '';
     this.from = `iReporter <${process.env.EMAIL_FROM}>`;
   }
 
@@ -38,6 +41,9 @@ module.exports = class Email {
     //Render html based on a pug template
     const html = pug.renderFile(`${__dirname}/../views/${template}.pug`, {
       url: this.url,
+      firstName: this.firstName,
+      title: this.title,
+      status: this.status,
       subject: subject,
     });
 
@@ -63,6 +69,10 @@ module.exports = class Email {
 
   async sendWelcome() {
     await this.send('welcome', 'Welcome to the iReporter family');
+  }
+
+  async sendStatusUpdate() {
+    await this.send('statusUpdate', 'Your report status has been updated');
   }
 
   async sendPasswordReset() {
