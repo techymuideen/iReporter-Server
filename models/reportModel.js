@@ -65,7 +65,7 @@ reportSchema.pre('save', function (next) {
 
 reportSchema.pre('save', function (next) {
   if (this.isModified('status')) {
-    this.updatedAt = new Date();
+    this.updatedAt = new Date(Date.now());
   }
   next();
 });
