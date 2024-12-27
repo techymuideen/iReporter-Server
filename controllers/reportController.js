@@ -159,7 +159,7 @@ exports.getAllReports = catchAsync(async (req, res, next) => {
 exports.getReport = catchAsync(async (req, res, next) => {
   let query = Report.findById(req.params.id).populate({
     path: 'createdBy',
-    select: ['-createdAt', '-passwordChangedAt', '-__v'],
+    select: ['-passwordChangedAt', '-__v'],
   });
 
   const report = await query;
@@ -200,6 +200,7 @@ exports.getReport = catchAsync(async (req, res, next) => {
           role: user.role,
         },
         createdAt: report.createdAt,
+        updatedAt: report.updatedAt,
         slug: report.slug,
         __v: report.__v,
         id: report._id,
@@ -214,18 +215,19 @@ exports.updateReport = factory.updateOne(Report);
 
 exports.changeReportStatus = catchAsync(async (req, res, next) => {
   try {
-    const doc = await Report.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const doc = await Report.findByIdAndUpdate(req.params.id);
 
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));
     }
 
+    doc.status = req.body.status;
+
+    await doc.save();
+
     const user = await User.findById(doc.createdBy);
 
-    const url = `${req.protocol}://${req.get('host')}/api/v1/reports/${doc._id}`;
+    const url = `${process.env.FRONTEND_BASE_URL}/report/${doc._id}`;
 
     await new Email(user, url, doc).sendStatusUpdate();
 
